@@ -82,9 +82,12 @@ const App = () => {
     setLoading(true);
     setError('');
     
+    const cleanApiKey = apiKey.trim();
+    const cleanFileUrl = fileUrl.trim();
+    
     try {
-      const fileId = extractFileId(fileUrl);
-      const data = await fetchFigmaFile(fileId, apiKey);
+      const fileId = extractFileId(cleanFileUrl);
+      const data = await fetchFigmaFile(fileId, cleanApiKey);
       const extractedTokens = extractTokens(data);
       setTokens({
         ...extractedTokens,
@@ -95,13 +98,20 @@ const App = () => {
         }
       });
 
-      if (extractedTokens.components.length > 0) {
-        const ids = extractedTokens.components.map(c => c.id).slice(0, 20);
-        const images = await fetchFigmaImages(fileId, ids, apiKey);
-        setComponentImages(images);
+      // Fetch images in a separate try-catch so it doesn't block the whole app
+      try {
+        if (extractedTokens.components.length > 0) {
+          const ids = extractedTokens.components.map(c => c.id).slice(0, 20);
+          const images = await fetchFigmaImages(fileId, ids, cleanApiKey);
+          setComponentImages(images);
+        }
+      } catch (imgErr) {
+        console.warn('Image fetch failed but tokens are loaded', imgErr);
       }
     } catch (err) {
-      setError('Invalid API Key or File URL. Please try again.');
+      const status = err.response?.status;
+      const figmaMsg = err.response?.data?.message || err.message;
+      setError(`Figma API Error (${status || 'Network'}): ${figmaMsg}`);
       console.error(err);
     } finally {
       setLoading(false);

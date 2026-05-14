@@ -26,6 +26,19 @@
 
 Developed by **[Sangar Studio](https://sangar.studio)**.
 
+## 🚀 Deployment
+
+### Deploy to Vercel (Recommended)
+1. Push your code to GitHub.
+2. Connect your repo to [Vercel](https://vercel.com).
+3. It will automatically detect Vite and deploy.
+
+### Manual Build
+```bash
+npm run build
+```
+Upload the contents of the `dist` folder to any static hosting.
+
 ## 📄 License
 
 This project is for internal use at Sangar Studio.
