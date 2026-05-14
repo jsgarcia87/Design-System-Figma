@@ -416,8 +416,9 @@ const App = () => {
         .nav-item-btn:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-item-btn.active { background: rgba(167, 139, 250, 0.1); color: var(--accent-primary); border: 1px solid rgba(167, 139, 250, 0.1); }
         .author-link { display: flex; align-items: center; gap: 0.5rem; color: var(--accent-secondary); font-size: 0.75rem; font-weight: 600; margin-bottom: 1.5rem; text-decoration: none; }
-        .file-info-mini { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-md); margin-bottom: 1rem; border: 1px solid var(--bg-border); }
-        .file-info-mini .thumb { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
+        .file-info-mini { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-md); margin-bottom: 1rem; border: 1px solid var(--bg-border); width: 100%; overflow: hidden; }
+        .file-info-mini .thumb { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+        .file-info-mini .info { display: flex; flex-direction: column; overflow: hidden; width: 100%; }
         .file-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .app-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .content-nav { height: 80px; border-bottom: 1px solid var(--bg-border); display: flex; align-items: center; justify-content: space-between; padding: 0 4rem; }
@@ -447,7 +448,7 @@ const App = () => {
         .export-options { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
         .code-container { background: #000; padding: 2rem; border-radius: var(--radius-md); height: 350px; overflow: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #a5d6ff; line-height: 1.5; border: 1px solid var(--bg-border); }
         .view-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .export-btns { display: flex; gap: 0.5rem; }
+        .export-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
         @media (max-width: 1024px) {
           .overview-grid { grid-template-columns: 1fr; }
@@ -458,7 +459,7 @@ const App = () => {
 
         @media (max-width: 768px) {
           .mobile-menu-btn { display: block; }
-          .app-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 99; transform: translateX(-100%); width: 260px; }
+          .app-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 99; transform: translateX(-100%); width: 280px; overflow-y: auto; }
           .app-sidebar.mobile-open { transform: translateX(0); }
           .content-nav { padding: 0 1.5rem; justify-content: flex-end; }
           .search-bar { width: 100%; max-width: none; margin-left: 3rem; }
@@ -468,6 +469,8 @@ const App = () => {
           .typo-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
           .typo-meta-box { width: 100%; }
           .view-header-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+          .export-btns { width: 100%; }
+          .export-btns .btn-premium { flex: 1; justify-content: center; }
           .hero-banner { padding: 2rem; }
         }
       `}</style>
