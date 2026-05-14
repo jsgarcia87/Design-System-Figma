@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Ultra-Premium Cyber Palette */
+  --bg-app: #050505;
+  --bg-surface: #0f0f12;
+  --bg-elevated: #16161a;
+  --bg-border: #1f1f25;
+  
+  --accent-glow: rgba(139, 92, 246, 0.4);
+  --accent-primary: #a78bfa;
+  --accent-secondary: #22d3ee;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-dim: #71717a;
+  
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  
+  --glass: rgba(15, 15, 18, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  
+  --font-main: 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --transition-smooth: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* Main container handles scroll */
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* Layout Utilities */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(167, 139, 250, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.03) 0%, transparent 40%);
+}
+
+/* Glassmorphism */
+.glass-effect {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Animations */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.98) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-in {
+  animation: fadeInScale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Premium Components */
+.btn-premium {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-family: var(--font-display);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: white;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-premium:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-premium.primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  color: #000;
+}
+
+.btn-premium.primary:hover {
+  box-shadow: 0 0 30px rgba(167, 139, 250, 0.3);
+}
+
+.input-premium {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  color: white;
+  font-family: var(--font-main);
+  transition: var(--transition-smooth);
+  width: 100%;
+}
+
+.input-premium:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.05);
+}
+
+/* Card System */
+.card-premium {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: var(--transition-smooth);
+}
+
+.card-premium:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-elevated);
+}
+
+/* Typography Scale */
+h1 { font-family: var(--font-display); font-size: 3.5rem; line-height: 1.1; font-weight: 800; letter-spacing: -0.04em; }
+h2 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; }
+p { color: var(--text-secondary); }
+
+code {
+  font-family: var(--font-mono);
+  background: rgba(255,255,255,0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
