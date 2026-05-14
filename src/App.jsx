@@ -71,8 +71,10 @@ const App = () => {
   const [copied, setCopied] = useState(false);
 
   const extractFileId = (url) => {
-    const match = url.match(/file\/([a-zA-Z0-9]+)/);
-    return match ? match[1] : url;
+    const match = url.match(/(?:file|design)\/([a-zA-Z0-9]+)/);
+    if (match) return match[1];
+    if (/^[a-zA-Z0-9]+$/.test(url)) return url;
+    return url;
   };
 
   const handleGenerate = async (e) => {

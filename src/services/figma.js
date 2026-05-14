@@ -11,7 +11,11 @@ export const fetchFigmaFile = async (fileId, apiKey) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching Figma file:', error);
+    console.error('FIGMA_API_ERROR:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     throw error;
   }
 };
