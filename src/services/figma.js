@@ -165,6 +165,28 @@ export const pushTokensToFigma = async (fileId, apiKey, tokens) => {
   }
 };
 
+export const generateCSSTokens = (tokens) => {
+  const slug = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unnamed';
+  const lines = [':root {'];
+
+  (tokens.colors || []).forEach(c => {
+    lines.push(`  --color-${slug(c.name)}: ${c.hex};`);
+  });
+  (tokens.typography || []).forEach(t => {
+    const key = slug(t.name);
+    lines.push(`  --font-family-${key}: '${t.fontFamily || 'Inter'}';`);
+    lines.push(`  --font-size-${key}: ${t.fontSize || 16}px;`);
+    lines.push(`  --font-weight-${key}: ${t.fontWeight || 400};`);
+    if (t.lineHeight) lines.push(`  --line-height-${key}: ${Math.round(t.lineHeight)}px;`);
+  });
+  (tokens.spacing || []).forEach(s => {
+    lines.push(`  --spacing-${slug(s.name)}: ${s.value}px;`);
+  });
+
+  lines.push('}');
+  return lines.join('\n');
+};
+
 // Resolves tokens preferring real, named sources (Figma Variables, then named
 // FILL/TEXT styles) and only falls back to raw fills/text when a file exposes
 // no design tokens at all — so simple files and the demo still produce output.
@@ -296,6 +318,43 @@ export const extractTokens = (figmaData, variablesMeta = null) => {
   }
 
   return tokens;
+};
+
+export const generateTokenStudioJSON = (tokens) => {
+  const slug = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unnamed';
+  const result = { global: {} };
+
+  if (tokens.colors?.length) {
+    result.global.colors = {};
+    tokens.colors.forEach(c => {
+      result.global.colors[slug(c.name)] = { value: c.hex, type: 'color' };
+    });
+  }
+
+  if (tokens.typography?.length) {
+    result.global.typography = {};
+    tokens.typography.forEach(t => {
+      result.global.typography[slug(t.name)] = {
+        value: {
+          fontFamily: t.fontFamily || 'Inter',
+          fontWeight: String(t.fontWeight || 400),
+          fontSize: String(t.fontSize || 16),
+          lineHeight: t.lineHeight ? String(Math.round(t.lineHeight)) : 'AUTO',
+          letterSpacing: t.letterSpacing ? `${t.letterSpacing}px` : '0%',
+        },
+        type: 'typography',
+      };
+    });
+  }
+
+  if (tokens.spacing?.length) {
+    result.global.spacing = {};
+    tokens.spacing.forEach(s => {
+      result.global.spacing[slug(s.name)] = { value: String(s.value), type: 'spacing' };
+    });
+  }
+
+  return result;
 };
 
 const rgbToHex = (r, g, b) => {
