@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Palette,
   Type,
@@ -21,7 +21,10 @@ import {
   Globe,
   Menu,
   X,
-  UploadCloud
+  UploadCloud,
+  ArrowLeft,
+  Shield,
+  Scale
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
@@ -71,6 +74,21 @@ const App = () => {
   const [figmaFileId, setFigmaFileId] = useState('');
   const [pushing, setPushing] = useState(false);
   const [pushMsg, setPushMsg] = useState(null);
+  const [route, setRoute] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const onPop = () => setRoute(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const navigate = (path) => {
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+    setRoute(path);
+    window.scrollTo(0, 0);
+  };
 
   const extractFileId = (url) => {
     const match = url.match(/(?:file|design)\/([a-zA-Z0-9]+)/);
@@ -211,6 +229,10 @@ const App = () => {
     };
   }, [tokens, searchQuery]);
 
+  if (route === '/privacy' || route === '/legal') {
+    return <LegalPage type={route === '/privacy' ? 'privacy' : 'legal'} onNavigate={navigate} />;
+  }
+
   if (!tokens) {
     return (
       <div className="landing-page">
@@ -278,6 +300,15 @@ const App = () => {
           </motion.div>
         </main>
 
+        <footer className="landing-footer">
+          <span>© {new Date().getFullYear()} Sangar Studio</span>
+          <nav className="footer-links">
+            <a href="/privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }}>Política de privacidad</a>
+            <span className="footer-sep">·</span>
+            <a href="/legal" onClick={(e) => { e.preventDefault(); navigate('/legal'); }}>Aviso legal</a>
+          </nav>
+        </footer>
+
         <style>{`
           .landing-page {
             height: 100vh; background: var(--bg-app); overflow-y: auto; display: flex; flex-direction: column;
@@ -299,10 +330,16 @@ const App = () => {
           .error-text { color: var(--error); margin-top: 1.5rem; font-size: 0.9rem; }
           .btn-link { color: var(--text-secondary); font-weight: 500; transition: color 0.2s; }
           .btn-link:hover { color: white; }
-          
+          .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1.5rem 4rem; border-top: 1px solid var(--bg-border); color: var(--text-dim); font-size: 0.85rem; }
+          .footer-links { display: flex; align-items: center; gap: 0.75rem; }
+          .footer-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+          .footer-links a:hover { color: white; }
+          .footer-sep { color: var(--bg-border); }
+
           @media (max-width: 768px) {
             .landing-header { padding: 1.5rem 2rem; }
             .landing-hero { padding: 2rem; }
+            .landing-footer { padding: 1.5rem 2rem; justify-content: center; text-align: center; }
             .form-row { grid-template-columns: 1fr; gap: 1rem; }
             .form-footer { flex-direction: column; width: 100%; }
             .form-footer button { width: 100%; }
@@ -584,5 +621,132 @@ const ExportCard = ({ title, lang, code, onCopy, copied }) => (
     </button>
   </div>
 );
+
+const LEGAL_CONTENT = {
+  privacy: {
+    icon: <Shield size={26} color="var(--accent-primary)" />,
+    title: 'Política de privacidad',
+    updated: 'Última actualización: ' + new Date().toLocaleDateString('es-ES'),
+    sections: [
+      {
+        h: '1. Resumen',
+        p: 'FigmaTokens Pro se ejecuta íntegramente en tu navegador. No disponemos de servidores propios que reciban o almacenen los datos que introduces.'
+      },
+      {
+        h: '2. Datos que tratamos',
+        p: 'El token personal de Figma y la URL del archivo que introduces se utilizan únicamente dentro de tu navegador para realizar llamadas directas a la API oficial de Figma. No se envían, registran ni almacenan en servidores de Sangar Studio, ni se guardan de forma persistente en tu dispositivo.'
+      },
+      {
+        h: '3. Generación local',
+        p: 'Los tokens extraídos y las exportaciones (CSS, JSON, Markdown y PDF) se generan localmente en tu dispositivo. La función "Push to Figma", si la usas, envía tus tokens a la API de Figma para crear Variables en tu propio archivo.'
+      },
+      {
+        h: '4. Cookies y analítica',
+        p: 'La aplicación no instala cookies ni utiliza herramientas de analítica o seguimiento.'
+      },
+      {
+        h: '5. Terceros',
+        p: 'Las peticiones se dirigen a api.figma.com (sujeto a la política de privacidad de Figma). Además se cargan tipografías desde Google Fonts y una textura desde transparenttextures.com.'
+      },
+      {
+        h: '6. Contacto',
+        p: 'Para ejercer tus derechos o realizar consultas sobre privacidad: [completar correo de contacto]. Esta es una política base que refleja la arquitectura actual de la aplicación; revísala con asesoría legal antes de su uso en producción.'
+      }
+    ]
+  },
+  legal: {
+    icon: <Scale size={26} color="var(--accent-primary)" />,
+    title: 'Aviso legal',
+    updated: 'Última actualización: ' + new Date().toLocaleDateString('es-ES'),
+    sections: [
+      {
+        h: '1. Titular',
+        p: 'Este sitio es operado por Sangar Studio (https://sangar.studio). Datos identificativos: razón social [completar], NIF/CIF [completar], domicilio [completar], correo de contacto [completar].'
+      },
+      {
+        h: '2. Objeto',
+        p: 'FigmaTokens Pro es una herramienta que permite extraer design tokens (colores, tipografía y componentes) de archivos de Figma y exportarlos en distintos formatos.'
+      },
+      {
+        h: '3. Propiedad intelectual',
+        p: 'Las marcas, nombres comerciales y, en particular, "Figma", pertenecen a sus respectivos titulares. FigmaTokens Pro no está afiliado, asociado ni respaldado por Figma, Inc.'
+      },
+      {
+        h: '4. Responsabilidad',
+        p: 'El servicio se proporciona "tal cual", sin garantías de ningún tipo. El usuario es el único responsable de la custodia de su token personal de Figma y del uso que haga de sus archivos y de los resultados generados.'
+      },
+      {
+        h: '5. Legislación aplicable',
+        p: 'Las presentes condiciones se rigen por la legislación de [completar jurisdicción], sometiéndose las partes a los juzgados y tribunales que correspondan.'
+      }
+    ]
+  }
+};
+
+const LegalPage = ({ type, onNavigate }) => {
+  const content = LEGAL_CONTENT[type];
+  return (
+    <div className="legal-page">
+      <header className="legal-header">
+        <button className="legal-back" onClick={() => onNavigate('/')}>
+          <ArrowLeft size={18} /> Volver
+        </button>
+        <div className="logo-small">
+          <Sparkles size={20} color="var(--accent-primary)" />
+          <span>FigmaTokens Pro</span>
+        </div>
+      </header>
+
+      <main className="legal-main">
+        <div className="legal-title">
+          {content.icon}
+          <h1>{content.title}</h1>
+        </div>
+        <p className="legal-updated">{content.updated}</p>
+
+        {content.sections.map((s) => (
+          <section key={s.h} className="legal-section">
+            <h2>{s.h}</h2>
+            <p>{s.p}</p>
+          </section>
+        ))}
+
+        <nav className="legal-cross">
+          <a
+            href={type === 'privacy' ? '/legal' : '/privacy'}
+            onClick={(e) => { e.preventDefault(); onNavigate(type === 'privacy' ? '/legal' : '/privacy'); }}
+          >
+            {type === 'privacy' ? 'Ver aviso legal' : 'Ver política de privacidad'}
+          </a>
+        </nav>
+      </main>
+
+      <style>{`
+        .legal-page { min-height: 100vh; height: 100vh; overflow-y: auto; background: var(--bg-app); display: flex; flex-direction: column;
+          background-image: radial-gradient(circle at 50% -20%, rgba(167, 139, 250, 0.12) 0%, transparent 50%); }
+        .legal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem 4rem; border-bottom: 1px solid var(--bg-border); }
+        .legal-back { display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-weight: 600; transition: color 0.2s; }
+        .legal-back:hover { color: white; }
+        .logo-small { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; }
+        .legal-main { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 4rem; }
+        .legal-title { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+        .legal-title h1 { font-size: 2.5rem; }
+        .legal-updated { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 3rem; }
+        .legal-section { margin-bottom: 2rem; }
+        .legal-section h2 { font-size: 1.15rem; margin-bottom: 0.6rem; color: var(--text-primary); }
+        .legal-section p { color: var(--text-secondary); line-height: 1.7; }
+        .legal-cross { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--bg-border); }
+        .legal-cross a { color: var(--accent-secondary); font-weight: 600; text-decoration: none; }
+        .legal-cross a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+          .legal-header { padding: 1.25rem 1.5rem; }
+          .legal-main { padding: 2.5rem 1.5rem; }
+          .legal-title h1 { font-size: 1.9rem; }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default App;
