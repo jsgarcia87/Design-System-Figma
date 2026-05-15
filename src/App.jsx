@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Layout, 
-  Palette, 
-  Type, 
-  Box, 
-  Download, 
+import { useState, useMemo } from 'react';
+import {
+  Palette,
+  Type,
+  Box,
+  Download,
   Settings,
   Loader2,
-  ArrowRight,
-  Code,
-  FileJson,
   Check,
   Copy,
   Search,
@@ -17,7 +13,6 @@ import {
   GitPullRequest,
   Monitor,
   Command,
-  Info,
   Layers,
   Sparkles,
   FileText,
@@ -25,11 +20,12 @@ import {
   ExternalLink,
   Globe,
   Menu,
-  X
+  X,
+  UploadCloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
-import { fetchFigmaFile, extractTokens, fetchFigmaImages } from './services/figma';
+import { fetchFigmaFile, extractTokens, fetchFigmaImages, fetchFigmaVariables, pushTokensToFigma } from './services/figma';
 
 // Mock data for Demo Mode
 const MOCK_TOKENS = {
@@ -72,6 +68,9 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [figmaFileId, setFigmaFileId] = useState('');
+  const [pushing, setPushing] = useState(false);
+  const [pushMsg, setPushMsg] = useState(null);
 
   const extractFileId = (url) => {
     const match = url.match(/(?:file|design)\/([a-zA-Z0-9]+)/);
@@ -84,14 +83,17 @@ const App = () => {
     if (e) e.preventDefault();
     setLoading(true);
     setError('');
-    
+    setPushMsg(null);
+
     const cleanApiKey = apiKey.trim();
     const cleanFileUrl = fileUrl.trim();
-    
+
     try {
       const fileId = extractFileId(cleanFileUrl);
       const data = await fetchFigmaFile(fileId, cleanApiKey);
-      const extractedTokens = extractTokens(data);
+      const variablesMeta = await fetchFigmaVariables(fileId, cleanApiKey);
+      const extractedTokens = extractTokens(data, variablesMeta);
+      setFigmaFileId(fileId);
       setTokens({
         ...extractedTokens,
         fileInfo: {
@@ -122,10 +124,37 @@ const App = () => {
 
   const startDemo = () => {
     setLoading(true);
+    setFigmaFileId('');
+    setPushMsg(null);
     setTimeout(() => {
       setTokens(MOCK_TOKENS);
       setLoading(false);
     }, 1500);
+  };
+
+  const handlePushToFigma = async () => {
+    if (!apiKey.trim() || !figmaFileId) {
+      setPushMsg({
+        type: 'error',
+        text: 'Push needs a real connected file. Generate from a Figma URL + token first (not available in demo mode).'
+      });
+      return;
+    }
+    setPushing(true);
+    setPushMsg(null);
+    try {
+      const { count } = await pushTokensToFigma(figmaFileId, apiKey.trim(), tokens);
+      setPushMsg({ type: 'success', text: `Pushed ${count} variables to Figma. Open the file's Variables panel to see them.` });
+    } catch (err) {
+      const status = err.response?.status;
+      const figmaMsg = err.response?.data?.message || err.message;
+      setPushMsg({
+        type: 'error',
+        text: `Figma write failed (${status || 'Network'}): ${figmaMsg}${status === 403 ? ' — the Variables write API requires an Enterprise org and a token with file_variables:write scope.' : ''}`
+      });
+    } finally {
+      setPushing(false);
+    }
   };
 
   const copyToClipboard = (text) => {
@@ -235,7 +264,7 @@ const App = () => {
                 </div>
 
                 <div className="form-footer">
-                  <button type="submit" className="btn-premium primary" disabled={loading || (!apiKey && !fileUrl)}>
+                  <button type="submit" className="btn-premium primary" disabled={loading || !apiKey || !fileUrl}>
                     {loading ? <Loader2 className="animate-spin" /> : <><Zap size={18} /> Generate System</>}
                   </button>
                   <div className="divider">or</div>
@@ -318,7 +347,7 @@ const App = () => {
               <span className="file-date">Last synced {new Date(tokens.fileInfo.lastModified).toLocaleDateString()}</span>
             </div>
           </div>
-          <button className="btn-logout" onClick={() => setTokens(null)}>
+          <button className="btn-logout" onClick={() => { setTokens(null); setFigmaFileId(''); setPushMsg(null); }}>
             <Settings size={16} /> Change File
           </button>
         </div>
@@ -392,10 +421,19 @@ const App = () => {
                   <div className="view-header-row">
                     <h2>Export</h2>
                     <div className="export-btns">
+                      <button className="btn-premium primary" onClick={handlePushToFigma} disabled={pushing}>
+                        {pushing ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                        {pushing ? 'Pushing…' : 'Push to Figma'}
+                      </button>
                       <button className="btn-premium" onClick={downloadMarkdown}><FileText size={16} /> .MD</button>
                       <button className="btn-premium" onClick={downloadPDF}><FileCode size={16} /> .PDF</button>
                     </div>
                   </div>
+                  {pushMsg && (
+                    <p className={pushMsg.type === 'success' ? 'push-msg-ok' : 'error-text'} style={{ marginBottom: '1.5rem' }}>
+                      {pushMsg.text}
+                    </p>
+                  )}
                   <div className="export-options">
                     <ExportCard title="CSS" lang="css" code={`:root {\n${tokens.colors.map(c => `  --color-${c.name.toLowerCase().replace(/\s+/g, '-')}: ${c.hex};`).join('\n')}\n}`} onCopy={copyToClipboard} copied={copied} />
                     <ExportCard title="JSON" lang="json" code={JSON.stringify(tokens, null, 2)} onCopy={copyToClipboard} copied={copied} />
@@ -446,9 +484,13 @@ const App = () => {
         .typo-prev { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .comp-grid-premium { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
         .export-options { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .code-container { background: #000; padding: 2rem; border-radius: var(--radius-md); height: 350px; overflow: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #a5d6ff; line-height: 1.5; border: 1px solid var(--bg-border); }
+        .export-options > * { min-width: 0; }
+        .code-container { background: #000; padding: 2rem; border-radius: var(--radius-md); height: 350px; overflow: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #a5d6ff; line-height: 1.5; border: 1px solid var(--bg-border); max-width: 100%; }
+        .code-container pre { margin: 0; }
         .view-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .export-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .error-text { color: var(--error); font-size: 0.9rem; line-height: 1.5; }
+        .push-msg-ok { color: var(--success); font-size: 0.9rem; line-height: 1.5; }
 
         @media (max-width: 1024px) {
           .overview-grid { grid-template-columns: 1fr; }
